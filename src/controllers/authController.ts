@@ -6,22 +6,31 @@ import { signToken } from '../services/jwtService';
 
 export const register = async (req: Request, res: Response) => {
   const { username, phone, password } = req.body;
-  if (!username || !phone || !password) return res.status(400).json({ message: 'Missing fields' });
+  if (!username || !phone || !password)
+    return res.status(400).json({ message: 'Заполните все поля' });
 
-  // можем проверить уникальность
-  const existing = await User.findOne({ $or: [{ username }, { phone }] });
-  if (existing) return res.status(400).json({ message: 'User exists' });
+  // проверяем — есть ли уже верифицированный пользователь
+  const existing = await User.findOne({ phone });
+  if (existing && existing.verified)
+    return res.status(400).json({ message: 'Пользователь с таким номером уже существует' });
 
-  // генерируем временный код (логируется)
-  sendCodeToPhone(phone);
+  // если есть не верифицированный — просто обновляем пароль и логируем код заново
+  if (existing && !existing.verified) {
+    const passwordHash = await bcrypt.hash(password, 10);
+    existing.passwordHash = passwordHash;
+    await existing.save();
+    sendCodeToPhone(phone);
+    return res.json({ message: 'Код повторно отправлен', phone });
+  }
 
-  // Временно сохраняем запись в базе? Для простоты — создаём пользователя с verified=false и passwordHash placeholder.
-  // Альтернатива: хранить в separate pending collection. Здесь — сделаем временную запись:
+  // создаем нового пользователя
   const passwordHash = await bcrypt.hash(password, 10);
   const user = new User({ username, phone, passwordHash, verified: false, balance: 0 });
   await user.save();
 
-  return res.json({ message: 'Code sent', phone });
+  sendCodeToPhone(phone);
+
+  return res.json({ message: 'Код отправлен', phone });
 };
 
 export const verify = async (req: Request, res: Response) => {
