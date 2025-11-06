@@ -3,7 +3,7 @@ import User from '../models/user.model';
 import GameHistory from '../models/history.model';
 
 // простая логика слотов
-const SLOT_SYMBOLS = ['A','B','C','D','7'];
+const SLOT_SYMBOLS = ['🍒', '🍋', '⭐', '7️⃣', '💎'];
 const spinReel = () => SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)];
 
 export const playGame = async (req: any, res: Response) => {
@@ -18,11 +18,20 @@ export const playGame = async (req: any, res: Response) => {
     const r2 = spinReel();
     const r3 = spinReel();
     let multiplier = 0;
+    
+    // Логика выигрыша
     if (r1 === r2 && r2 === r3) {
-      if (r1 === '7') multiplier = 7;
-      else multiplier = 3;
+      // Все три одинаковые
+      if (r1 === '7️⃣') multiplier = 10;    // 7️⃣7️⃣7️⃣ = x10
+      else if (r1 === '💎') multiplier = 7; // 💎💎💎 = x7
+      else if (r1 === '⭐') multiplier = 5;  // ⭐⭐⭐ = x5
+      else multiplier = 3;                  // 🍒🍒🍒 или 🍋🍋🍋 = x3
     } else if (r1 === r2 || r2 === r3 || r1 === r3) {
-      multiplier = 1.5; // частичный
+      // Два одинаковых
+      const sameSymbol = r1 === r2 ? r1 : r2 === r3 ? r2 : r1;
+      if (sameSymbol === '7️⃣') multiplier = 3;
+      else if (sameSymbol === '💎') multiplier = 2;
+      else multiplier = 1.5;
     }
 
     const amountWon = Math.floor(bet * multiplier);
