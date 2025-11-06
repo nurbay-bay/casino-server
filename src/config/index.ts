@@ -7,4 +7,5 @@ export default {
   jwtSecret: process.env.JWT_SECRET || 'change_me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   stripeKey: process.env.STRIPE_SECRET_KEY || '',
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
 };

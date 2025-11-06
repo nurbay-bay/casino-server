@@ -1,6 +1,7 @@
 import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IGameHistory extends Document {
+  _id: Types.ObjectId;
   userId: Types.ObjectId;
   game: 'slots'|'plinko';
   bet: number;

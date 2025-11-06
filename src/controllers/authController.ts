@@ -46,8 +46,17 @@ export const verify = async (req: Request, res: Response) => {
   user.verified = true;
   await user.save();
 
-  const token = signToken({ id: user._id, username: user.username });
-  return res.json({ message: 'Verified', user: { id: user._id, username: user.username, phone: user.phone, balance: user.balance }, token });
+  const token = signToken({ id: user._id.toString(), username: user.username });
+  return res.json({ 
+    message: 'Verified', 
+    user: { 
+      id: user._id.toString(), 
+      username: user.username, 
+      phone: user.phone, 
+      balance: user.balance 
+    }, 
+    token 
+  });
 };
 
 export const login = async (req: Request, res: Response) => {
@@ -60,12 +69,27 @@ export const login = async (req: Request, res: Response) => {
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) return res.status(401).json({ message: 'Bad credentials' });
 
-  const token = signToken({ id: user._id, username: user.username });
-  return res.json({ token, user: { id: user._id, username: user.username, phone: user.phone, balance: user.balance } });
+  const token = signToken({ id: user._id.toString(), username: user.username });
+  return res.json({ 
+    token, 
+    user: { 
+      id: user._id.toString(), 
+      username: user.username, 
+      phone: user.phone, 
+      balance: user.balance 
+    } 
+  });
 };
 
 export const profile = async (req: any, res: Response) => {
   const user = req.user;
   if (!user) return res.status(404).json({ message: 'User not found' });
-  return res.json({ user: { id: user._id, username: user.username, phone: user.phone, balance: user.balance } });
+  return res.json({ 
+    user: { 
+      id: user._id.toString(), 
+      username: user.username, 
+      phone: user.phone, 
+      balance: user.balance 
+    } 
+  });
 };

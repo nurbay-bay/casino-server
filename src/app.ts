@@ -9,23 +9,29 @@ import config from './config';
 import authRoutes from './routes/auth';
 import paymentRoutes from './routes/payments';
 import gameRoutes from './routes/games';
+import { renderPaymentPage } from './controllers/paymentController';
 
 const app = express();
 
+// Webhook должен обрабатываться ДО json парсера
+app.use('/api/payments/webhook', express.raw({type: 'application/json'}));
+
 app.use(express.json());
-app.use(cors({ origin: 'http://localhost:5173' })); // фронт
+app.use(cors({ origin: 'http://localhost:5173' }));
 app.use(morgan('dev'));
 app.use(errorHandler);
 
 // подключаемся к БД
 connectDB();
-// каждые 30 минут чистим
 setInterval(cleanupUnverifiedUsers, 30 * 60 * 1000);
 
-// роуты
+// API роуты
 app.use('/api/auth', authRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/games', gameRoutes);
+
+// Публичная платежная страница
+app.get('/payment/:token', renderPaymentPage);
 
 // health
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));

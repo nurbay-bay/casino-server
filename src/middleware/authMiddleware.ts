@@ -12,10 +12,9 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
   if (!token) return res.status(401).json({ message: 'No token' });
 
   const payload = verifyToken(token);
-  if (!payload || typeof payload === 'string') return res.status(401).json({ message: 'Invalid token' });
+  if (!payload) return res.status(401).json({ message: 'Invalid token' });
 
-  // @ts-ignore
-  const userId = (payload as any).id;
+  const userId = payload.id;
   const user = await User.findById(userId);
   if (!user) return res.status(401).json({ message: 'User not found' });
 
