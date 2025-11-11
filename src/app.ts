@@ -26,12 +26,14 @@ connectDB();
 setInterval(cleanupUnverifiedUsers, 30 * 60 * 1000);
 
 // API роуты
+app.use('/payment', express.static('public/payment'));
+app.use('/assets', express.static('public/assets'));
 app.use('/api/auth', authRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/games', gameRoutes);
 
 // Публичная платежная страница
-app.get('/payment/:token', renderPaymentPage);
+app.get('/payment/page/:token', renderPaymentPage);
 
 // health
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));

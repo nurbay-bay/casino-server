@@ -12,6 +12,7 @@ export interface IPayment extends Document {
   paymentToken: string;
   createdAt: Date;
   expiresAt: Date;
+  invoiceId: string;
 }
 
 const PaymentSchema = new Schema<IPayment>({
@@ -26,6 +27,7 @@ const PaymentSchema = new Schema<IPayment>({
   paymentToken: { type: String, required: true, unique: true },
   expiresAt: { type: Date, required: true },
   createdAt: { type: Date, default: Date.now },
+  invoiceId: { type: String, unique: true },
 });
 
 export default model<IPayment>('Payment', PaymentSchema);
