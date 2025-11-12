@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/authMiddleware';
 import { getUserPayments, getPaymentByToken } from '../controllers/payment/paymentController';
-import { createPayment } from '../controllers/payment/createPayment';
+import { cancelPayment, createPayment } from '../controllers/payment/createPayment';
 import { handleWebhook } from '../controllers/payment/webhookHandler';
 import { renderPaymentPage } from '../controllers/payment/renderPage';
 
@@ -14,5 +14,6 @@ router.post('/webhook', handleWebhook);
 // Публичные маршруты для платежной страницы
 router.get('/token/:token', getPaymentByToken);
 router.get('/page/:token', renderPaymentPage);
+router.post('/cancel/:token', cancelPayment);
 
 export default router;

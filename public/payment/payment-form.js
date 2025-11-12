@@ -135,10 +135,22 @@ class StripePaymentForm {
 
   notifyParentAndClose() {
     if (window.opener) {
-      window.opener.postMessage({ type: 'PAYMENT_SUCCESS', invoiceId: this.invoiceId }, '*');
+      window.opener.postMessage({ type: 'PAYMENT_CLOSED', invoiceId: this.invoiceId }, '*');
     }
     setTimeout(() => window.close(), 2000);
   }
 }
+
+window.addEventListener('beforeunload', () => {
+  if (window.opener && document.getElementById('submit-btn')?.textContent !== 'Обработка...') {
+    window.opener.postMessage({ type: 'PAYMENT_CLOSED', invoiceId: this.invoiceId }, '*');
+  }
+});
+
+window.addEventListener('message', (e) => {
+  if (e.data.type === 'PAYMENT_CLOSED') {
+    fetch(`/api/payments/cancel/${e.data.invoiceId}`, { method: 'POST' });
+  }
+});
 
 document.addEventListener('DOMContentLoaded', () => new StripePaymentForm());

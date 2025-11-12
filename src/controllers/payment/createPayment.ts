@@ -54,3 +54,14 @@ export const createPayment = async (req: any, res: Response) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+export const cancelPayment = async (req: Request, res: Response) => {
+  const { token } = req.params;
+  const payment = await Payment.findOne({ paymentToken: token, status: 'pending' });
+  if (!payment) return res.status(404).json({ message: 'Платёж не найден' });
+
+  payment.status = 'failed';
+  await payment.save();
+
+  res.json({ message: 'Платёж отменён' });
+};
