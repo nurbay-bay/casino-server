@@ -9,7 +9,8 @@ import config from './config';
 import authRoutes from './routes/auth';
 import paymentRoutes from './routes/payments';
 import gameRoutes from './routes/games';
-import { renderPaymentPage } from './controllers/paymentController';
+import { renderPaymentPage } from './controllers/payment/renderPage';
+
 
 const app = express();
 
