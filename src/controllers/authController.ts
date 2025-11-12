@@ -3,11 +3,31 @@ import bcrypt from 'bcrypt';
 import User from '../models/user.model';
 import { sendCodeToPhone, verifyCode } from '../services/smsService';
 import { signToken } from '../services/jwtService';
+import { body } from 'express-validator';
+
+const isAdult = (date: string) => {
+  const birth = new Date(date);
+  const today = new Date();
+  const age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+    return age - 1 >= 18;
+  }
+  return age >= 18;
+};
 
 export const register = async (req: Request, res: Response) => {
-  const { username, phone, password } = req.body;
-  if (!username || !phone || !password)
+  const { username, phone, password, birthDate } = req.body;
+
+  if (!username || !phone || !password || !birthDate)
     return res.status(400).json({ message: 'Заполните все поля' });
+
+  if (!isAdult(birthDate)) {
+    return res.status(403).json({ 
+      message: 'Доступ запрещён: вам должно быть 18 лет',
+      code: 'AGE_RESTRICTED'
+    });
+  }
 
   // проверяем — есть ли уже верифицированный пользователь
   const existing = await User.findOne({ phone });
@@ -25,7 +45,7 @@ export const register = async (req: Request, res: Response) => {
 
   // создаем нового пользователя
   const passwordHash = await bcrypt.hash(password, 10);
-  const user = new User({ username, phone, passwordHash, verified: false, balance: 0 });
+  const user = new User({ username, phone, passwordHash, verified: false, balance: 0, birthDate });
   await user.save();
 
   sendCodeToPhone(phone);
@@ -53,7 +73,8 @@ export const verify = async (req: Request, res: Response) => {
       id: user._id.toString(), 
       username: user.username, 
       phone: user.phone, 
-      balance: user.balance 
+      balance: user.balance,
+      birthDate: user.birthDate
     }, 
     token 
   });
@@ -76,7 +97,8 @@ export const login = async (req: Request, res: Response) => {
       id: user._id.toString(), 
       username: user.username, 
       phone: user.phone, 
-      balance: user.balance 
+      balance: user.balance,
+      birthDate: user.birthDate
     } 
   });
 };
@@ -89,7 +111,8 @@ export const profile = async (req: any, res: Response) => {
       id: user._id.toString(), 
       username: user.username, 
       phone: user.phone, 
-      balance: user.balance 
+      balance: user.balance,
+      birthDate: user.birthDate
     } 
   });
 };

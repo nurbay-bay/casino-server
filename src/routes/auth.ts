@@ -2,16 +2,17 @@ import { Router } from 'express';
 import { register, verify, login, profile } from '../controllers/authController';
 import { authMiddleware } from '../middleware/authMiddleware';
 
-import { validate } from '../middleware/validate';
 import { body } from 'express-validator';
+import { isAdult, validate } from '../middleware/validate';
 
 const router = Router();
 
 router.post('/register',
   validate([
-    body('username').isLength({ min: 3 }).matches(/^[a-zA-Z0-9_]+$/),
-    body('phone').isMobilePhone('any'),
-    body('password').isLength({ min: 6 })
+    body('username').isLength({ min: 3 }).matches(/^[a-zA-Z0-9_]+$/).withMessage('Только латиница, цифры, _'),
+    body('phone').isMobilePhone('any').withMessage('Неверный формат телефона'),
+    body('password').isLength({ min: 6 }).withMessage('Пароль от 6 символов'),
+    body('birthDate').isISO8601().withMessage('Неверная дата').custom(isAdult).withMessage('Вам должно быть 18+')
   ]),
   register
 );

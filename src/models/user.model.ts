@@ -7,6 +7,7 @@ export interface IUser extends Document {
   phone: string;
   verified: boolean;
   balance: number;
+  birthDate: Date;
   createdAt: Date;
 }
 
@@ -16,6 +17,7 @@ const UserSchema = new Schema<IUser>({
   phone: { type: String, required: true, unique: true, sparse: true },
   verified: { type: Boolean, default: false },
   balance: { type: Number, default: 0 },
+  birthDate: { type: Date, required: true },
   createdAt: { type: Date, default: Date.now },
 });
 
