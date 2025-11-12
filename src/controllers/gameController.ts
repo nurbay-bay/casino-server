@@ -22,11 +22,13 @@ export const playGame = async (req: any, res: Response) => {
   let result: GameResult;
   let amountWon: number = 0;
   let details: any = {};
+  let multiplier: number = 0;
 
   if (game === 'slots') {
     const slotResult: SlotResult = playSlots(bet);
     amountWon = slotResult.amountWon;
-    result = amountWon > 0 ? 'win' : 'lose';
+    multiplier = amountWon / bet;
+    result = multiplier >= 1 ? 'win' : 'lose';
     details = {
       symbols: slotResult.symbols,
       multiplier: slotResult.multiplier,
@@ -34,7 +36,8 @@ export const playGame = async (req: any, res: Response) => {
   } else if (game === 'plinko') {
     const plinkoResult: PlinkoResult = playPlinko(bet);
     amountWon = plinkoResult.amountWon;
-    result = amountWon > 0 ? 'win' : 'lose';
+    multiplier = amountWon / bet;
+    result = multiplier >= 1 ? 'win' : 'lose';
     details = { multiplier: plinkoResult.multiplier };
   } else {
     return res.status(400).json({ message: 'Unknown game' });
@@ -49,6 +52,7 @@ export const playGame = async (req: any, res: Response) => {
     userId: user._id,
     game,
     bet,
+    multiplier,
     result,
     amountWon,
     details,
