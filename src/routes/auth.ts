@@ -4,10 +4,11 @@ import { authMiddleware } from '../middleware/authMiddleware';
 
 import { body } from 'express-validator';
 import { isAdult, validate } from '../middleware/validate';
+import { authRateLimit } from '../middleware/rateLimit';
 
 const router = Router();
 
-router.post('/register',
+router.post('/register', authRateLimit,
   validate([
     body('username').isLength({ min: 3 }).matches(/^[a-zA-Z0-9_]+$/).withMessage('Только латиница, цифры, _'),
     body('phone').isMobilePhone('any').withMessage('Неверный формат телефона'),
@@ -16,13 +17,13 @@ router.post('/register',
   ]),
   register
 );
-router.post('/verify', verify);
+router.post('/verify', authRateLimit, verify);
 router.post('/login', login);
 router.get('/profile', authMiddleware, profile);
 
 router.post('/change-password', authMiddleware, changePassword);
 router.post('/change-phone', authMiddleware, changePhone);
-router.post('/verify-phone-change', authMiddleware, verifyPhoneChange);
+router.post('/verify-phone-change', authRateLimit, authMiddleware, verifyPhoneChange);
 
 export default router;
 
