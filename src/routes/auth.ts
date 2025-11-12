@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, verify, login, profile } from '../controllers/authController';
+import { register, verify, login, profile, changePassword, changePhone, verifyPhoneChange } from '../controllers/authController';
 import { authMiddleware } from '../middleware/authMiddleware';
 
 import { body } from 'express-validator';
@@ -19,6 +19,10 @@ router.post('/register',
 router.post('/verify', verify);
 router.post('/login', login);
 router.get('/profile', authMiddleware, profile);
+
+router.post('/change-password', authMiddleware, changePassword);
+router.post('/change-phone', authMiddleware, changePhone);
+router.post('/verify-phone-change', authMiddleware, verifyPhoneChange);
 
 export default router;
 

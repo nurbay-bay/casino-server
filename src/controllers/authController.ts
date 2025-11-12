@@ -116,3 +116,53 @@ export const profile = async (req: any, res: Response) => {
     } 
   });
 };
+
+export const changePassword = async (req: any, res: Response) => {
+  const { oldPassword, newPassword } = req.body;
+  if (!oldPassword || !newPassword || newPassword.length < 6)
+    return res.status(400).json({ message: 'Неверные данные' });
+
+  const ok = await bcrypt.compare(oldPassword, req.user.passwordHash);
+  if (!ok) return res.status(401).json({ message: 'Неверный старый пароль' });
+
+  req.user.passwordHash = await bcrypt.hash(newPassword, 10);
+  await req.user.save();
+
+  return res.json({ message: 'Пароль изменён' });
+};
+
+let phoneChangeRequests = new Map<string, { phone: string; expiresAt: number }>();
+
+export const changePhone = async (req: any, res: Response) => {
+  const { newPhone } = req.body;
+  if (!newPhone) return res.status(400).json({ message: 'Укажите телефон' });
+
+  const existing = await User.findOne({ phone: newPhone, verified: true });
+  if (existing) return res.status(400).json({ message: 'Номер уже занят' });
+
+  sendCodeToPhone(newPhone);
+  phoneChangeRequests.set(req.user._id.toString(), {
+    phone: newPhone,
+    expiresAt: Date.now() + 5 * 60 * 1000
+  });
+
+  return res.json({ message: 'Код отправлен на новый номер' });
+};
+
+export const verifyPhoneChange = async (req: any, res: Response) => {
+  const { code } = req.body;
+  const userId = req.user._id.toString();
+  const request = phoneChangeRequests.get(userId);
+
+  if (!request || request.expiresAt < Date.now())
+    return res.status(400).json({ message: 'Запрос истёк' });
+
+  const ok = verifyCode(request.phone, code);
+  if (!ok) return res.status(400).json({ message: 'Неверный код' });
+
+  req.user.phone = request.phone;
+  await req.user.save();
+  phoneChangeRequests.delete(userId);
+
+  return res.json({ message: 'Телефон обновлён' });
+};
