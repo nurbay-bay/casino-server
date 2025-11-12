@@ -3,14 +3,17 @@ import crypto from 'crypto';
 import Payment from '../../models/payment.model';
 import Stripe from 'stripe';
 import config from '../../config';
+import { customAlphabet } from 'nanoid';
 
 const stripe = new Stripe(config.stripeKey, { apiVersion: '2022-11-15' as any });
+
+const nanoid = customAlphabet('0123456789', 10);
 
 const generatePaymentToken = () => crypto.randomBytes(32).toString('hex');
 const generateInvoiceId = () => {
   const now = new Date();
-  const seq = Math.floor(Math.random() * 9999) + 1;
-  return `INV-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}-${seq.toString().padStart(4, '0')}`;
+  const date = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  return `INV-${date}-${nanoid(6)}`;
 };
 
 export const createPayment = async (req: any, res: Response) => {
