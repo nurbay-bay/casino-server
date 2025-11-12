@@ -135,7 +135,7 @@ class StripePaymentForm {
 
   notifyParentAndClose() {
     if (window.opener) {
-      window.opener.postMessage({ type: 'PAYMENT_CLOSED', invoiceId: this.invoiceId }, '*');
+      window.opener.postMessage({ type: 'PAYMENT_CLOSED', paymentToken: this.token }, '*');
     }
     setTimeout(() => window.close(), 2000);
   }

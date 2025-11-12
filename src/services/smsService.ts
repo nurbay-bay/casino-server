@@ -1,6 +1,6 @@
 const pendingCodes = new Map<string, { code: string; expiresAt: number; canResendAt: number }>();
 
-export const sendCodeToPhone = (phone: string) => {
+export const sendCodeToPhone = (phone: string): string => {
   const now = Date.now();
   const existing = pendingCodes.get(phone);
   if (existing && now < existing.canResendAt) {
@@ -9,7 +9,7 @@ export const sendCodeToPhone = (phone: string) => {
 
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   const ttl = 5 * 60 * 1000;
-  const resendDelay = 60 * 1000; // 1 минута
+  const resendDelay = 60 * 1000;
 
   pendingCodes.set(phone, {
     code,

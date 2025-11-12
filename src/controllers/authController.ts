@@ -4,6 +4,7 @@ import User from '../models/user.model';
 import { sendCodeToPhone, verifyCode } from '../services/smsService';
 import { signToken } from '../services/jwtService';
 import { body } from 'express-validator';
+import PhoneChangeRequest from '../models/phoneChangeRequest.model';
 
 const isAdult = (date: string) => {
   const birth = new Date(date);
@@ -131,8 +132,6 @@ export const changePassword = async (req: any, res: Response) => {
   return res.json({ message: 'Пароль изменён' });
 };
 
-let phoneChangeRequests = new Map<string, { phone: string; expiresAt: number }>();
-
 export const changePhone = async (req: any, res: Response) => {
   const { newPhone } = req.body;
   if (!newPhone) return res.status(400).json({ message: 'Укажите телефон' });
@@ -140,29 +139,38 @@ export const changePhone = async (req: any, res: Response) => {
   const existing = await User.findOne({ phone: newPhone, verified: true });
   if (existing) return res.status(400).json({ message: 'Номер уже занят' });
 
-  sendCodeToPhone(newPhone);
-  phoneChangeRequests.set(req.user._id.toString(), {
-    phone: newPhone,
-    expiresAt: Date.now() + 5 * 60 * 1000
+  await PhoneChangeRequest.deleteOne({ userId: req.user._id });
+
+  const code = sendCodeToPhone(newPhone);
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+  const request = new PhoneChangeRequest({
+    userId: req.user._id,
+    newPhone,
+    code,
+    expiresAt,
   });
+  await request.save();
 
   return res.json({ message: 'Код отправлен на новый номер' });
 };
 
 export const verifyPhoneChange = async (req: any, res: Response) => {
   const { code } = req.body;
-  const userId = req.user._id.toString();
-  const request = phoneChangeRequests.get(userId);
+  const request = await PhoneChangeRequest.findOne({
+    userId: req.user._id,
+    expiresAt: { $gt: new Date() }
+  });
 
-  if (!request || request.expiresAt < Date.now())
-    return res.status(400).json({ message: 'Запрос истёк' });
+  if (!request) return res.status(400).json({ message: 'Запрос истёк или не найден' });
 
-  const ok = verifyCode(request.phone, code);
+  const ok = verifyCode(request.newPhone, code);
   if (!ok) return res.status(400).json({ message: 'Неверный код' });
 
-  req.user.phone = request.phone;
+  req.user.phone = request.newPhone;
   await req.user.save();
-  phoneChangeRequests.delete(userId);
+
+  await PhoneChangeRequest.deleteOne({ _id: request._id });
 
   return res.json({ message: 'Телефон обновлён' });
 };

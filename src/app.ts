@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import { connectDB } from './db';
-import { cleanupUnverifiedUsers } from './db/cleanup';
+import { cleanupPhoneChangeRequests, cleanupUnverifiedUsers } from './db/cleanup';
 import { errorHandler } from './middleware/errorHandler';
 import config from './config';
 
@@ -25,6 +25,7 @@ app.use(errorHandler);
 // подключаемся к БД
 connectDB();
 setInterval(cleanupUnverifiedUsers, 30 * 60 * 1000);
+setInterval(cleanupPhoneChangeRequests, 60 * 60 * 1000);
 
 // API роуты
 app.use('/payment', express.static('public/payment'));

@@ -23,6 +23,7 @@ export const renderPaymentPage = async (req: Request, res: Response) => {
   const rendered = html
     .replace(/{{stripe_key}}/g, config.stripePublishableKey)
     .replace(/{{token}}/g, token);
+    
 
   res.send(rendered);
 };

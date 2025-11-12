@@ -1,7 +1,7 @@
 import { Schema, model, Document, Types } from 'mongoose';
 
 // Определяем тип для статуса платежа
-export type PaymentStatus = 'pending' | 'success' | 'failed';
+export type PaymentStatus = 'pending' | 'success' | 'failed' | 'canceled';
 
 export interface IPayment extends Document {
   _id: Types.ObjectId;
@@ -20,7 +20,7 @@ const PaymentSchema = new Schema<IPayment>({
   amount: { type: Number, required: true },
   status: {
     type: String,
-    enum: ['pending', 'success', 'failed'] as PaymentStatus[],
+    enum: ['pending', 'success', 'failed', 'canceled'] as PaymentStatus[],
     default: 'pending',
   },
   providerId: { type: String },
