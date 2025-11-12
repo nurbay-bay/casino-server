@@ -20,3 +20,15 @@ export const sendCodeToPhone = (phone: string) => {
   console.log(`[SMS] Code for ${phone}: ${code}`);
   return code;
 };
+
+export const verifyCode = (phone: string, code: string) => {
+  const entry = pendingCodes.get(phone);
+  if (!entry) return false;
+  if (entry.expiresAt < Date.now()) {
+    pendingCodes.delete(phone);
+    return false;
+  }
+  const ok = entry.code === code;
+  if (ok) pendingCodes.delete(phone);
+  return ok;
+};
