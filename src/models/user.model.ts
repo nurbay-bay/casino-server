@@ -1,20 +1,23 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IUser extends Document {
+  _id: Types.ObjectId;
   username: string;
   passwordHash: string;
   phone: string;
   verified: boolean;
-  balance: number; // integer, например cents
+  balance: number;
+  birthDate: Date;
   createdAt: Date;
 }
 
 const UserSchema = new Schema<IUser>({
   username: { type: String, required: true, unique: true },
   passwordHash: { type: String, required: true },
-  phone: { type: String, required: true, unique: true },
+  phone: { type: String, required: true, unique: true, sparse: true },
   verified: { type: Boolean, default: false },
   balance: { type: Number, default: 0 },
+  birthDate: { type: Date, required: true },
   createdAt: { type: Date, default: Date.now },
 });
 

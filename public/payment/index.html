@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Оплата счёта {{invoiceId}}</title>
+  <link rel="stylesheet" href="/payment/style.css" />
+  <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-top">
+        <h1>Оплата счёта</h1>
+        <p class="invoice-id">ID счёта: <span id="invoice-id">INV-2025-11-0001</span></p>
+      </div>
+      <div class="amount" id="amount-display">0 KZT</div>
+    </div>
+
+    <!-- Payment Form -->
+    <div class="payment-section">
+      <div class="payment-header">
+        <h2>Оплата картой</h2>
+        <div class="card-icons">
+          <img src="/assets/visa.svg" alt="Visa" width="40">
+          <img src="/assets/mastercard.svg" alt="Mastercard" width="40">
+        </div>
+      </div>
+
+      <form id="payment-form">
+        <div class="form-row">
+          <div class="input-group card-number">
+            <label>Номер карты</label>
+            <div id="card-number"></div>
+          </div>
+          <div class="input-group card-holder">
+            <label>Имя держателя карты</label>
+            <input type="text" id="card-holder" placeholder="Иван Иванов" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="input-group expiry">
+            <label>MM / YY</label>
+            <div id="card-expiry"></div>
+          </div>
+          <div class="input-group cvc">
+            <label>CVC</label>
+            <div id="card-cvc"></div>
+          </div>
+        </div>
+
+        <!-- Country (Stripe Index) -->
+        <div class="form-row">
+          <div class="input-group country">
+            <label>Страна</label>
+            <select id="country">
+              <option value="KZ">Казахстан (KZ)</option>
+              <option value="RU">Россия (RU)</option>
+              <option value="US">США (US)</option>
+              <option value="DE">Германия (DE)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="card-errors" role="alert"></div>
+
+        <button type="submit" id="submit-btn">Оплатить</button>
+
+        <div class="footer">
+          <div class="timer">Осталось времени: <span id="timer">15:00</span></div>
+          <button type="button" class="back-btn" id="close-window">
+            Вернуться на сайт
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    window.STRIPE_PUBLISHABLE_KEY = '{{stripe_key}}';
+    window.paymentToken = '{{token}}';
+  </script>
+  <script src="/payment/payment-form.js"></script>
+</body>
+</html>
