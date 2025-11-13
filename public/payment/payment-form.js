@@ -17,7 +17,7 @@ class StripePaymentForm {
     this.amount = data.amount;
     this.clientSecret = data.clientSecret;
     this.invoiceId = data.invoiceId;
-    this.expiresIn = data.expiresIn; // seconds
+    this.expiresIn = data.expiresIn;
 
     this.updateUI();
     this.setupStripe();
@@ -135,21 +135,31 @@ class StripePaymentForm {
 
   notifyParentAndClose() {
     if (window.opener) {
-      window.opener.postMessage({ type: 'PAYMENT_CLOSED', paymentToken: this.token }, '*');
+      // ИСПРАВЛЕНО: передаем paymentToken вместо invoiceId
+      window.opener.postMessage({ 
+        type: 'PAYMENT_SUCCESS', 
+        paymentToken: this.token 
+      }, '*');
     }
     setTimeout(() => window.close(), 2000);
   }
 }
 
+// ИСПРАВЛЕНО: передаем paymentToken при закрытии окна
 window.addEventListener('beforeunload', () => {
   if (window.opener && document.getElementById('submit-btn')?.textContent !== 'Обработка...') {
-    window.opener.postMessage({ type: 'PAYMENT_CLOSED', invoiceId: this.invoiceId }, '*');
+    const form = new StripePaymentForm();
+    window.opener.postMessage({ 
+      type: 'PAYMENT_CLOSED', 
+      paymentToken: window.paymentToken 
+    }, '*');
   }
 });
 
+// ИСПРАВЛЕНО: используем paymentToken для отмены
 window.addEventListener('message', (e) => {
-  if (e.data.type === 'PAYMENT_CLOSED') {
-    fetch(`/api/payments/cancel/${e.data.invoiceId}`, { method: 'POST' });
+  if (e.data.type === 'PAYMENT_CLOSED' && e.data.paymentToken) {
+    fetch(`/api/payments/cancel/${e.data.paymentToken}`, { method: 'POST' });
   }
 });
 
