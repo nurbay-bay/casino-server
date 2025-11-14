@@ -36,9 +36,13 @@ export const playGame = async (req: any, res: Response) => {
   } else if (game === 'plinko') {
     const plinkoResult: PlinkoResult = playPlinko(bet);
     amountWon = plinkoResult.amountWon;
-    multiplier = amountWon / bet;
+    multiplier = plinkoResult.multiplier;
     result = multiplier >= 1 ? 'win' : 'lose';
-    details = { multiplier: plinkoResult.multiplier };
+    details = {
+      multiplier: plinkoResult.multiplier,
+      cell: plinkoResult.cell,
+      path: plinkoResult.path,
+    };
   } else {
     return res.status(400).json({ message: 'Unknown game' });
   }
