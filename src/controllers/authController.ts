@@ -40,8 +40,12 @@ export const register = async (req: Request, res: Response) => {
     const passwordHash = await bcrypt.hash(password, 10);
     existing.passwordHash = passwordHash;
     await existing.save();
-    sendCodeToPhone(phone);
-    return res.json({ message: 'Код повторно отправлен', phone });
+    try {
+      sendCodeToPhone(phone);
+      return res.json({ message: 'Код повторно отправлен', phone });
+    } catch (err: any) {
+      return res.status(429).json({ message: err.message || 'Слишком много запросов' });
+    }
   }
 
   // создаем нового пользователя
@@ -49,9 +53,12 @@ export const register = async (req: Request, res: Response) => {
   const user = new User({ username, phone, passwordHash, verified: false, balance: 0, birthDate });
   await user.save();
 
-  sendCodeToPhone(phone);
-
-  return res.json({ message: 'Код отправлен', phone });
+  try {
+    sendCodeToPhone(phone);
+    return res.json({ message: 'Код отправлен', phone });
+  } catch (err: any) {
+    return res.status(429).json({ message: err.message || 'Слишком много запросов' });
+  }
 };
 
 export const verify = async (req: Request, res: Response) => {
@@ -87,6 +94,13 @@ export const login = async (req: Request, res: Response) => {
 
   const user = await User.findOne({ username });
   if (!user) return res.status(404).json({ message: 'User not found' });
+
+  if (!user.verified) {
+    return res.status(403).json({ 
+      message: 'Аккаунт не верифицирован. Пожалуйста, подтвердите номер телефона.',
+      code: 'NOT_VERIFIED'
+    });
+  }
 
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) return res.status(401).json({ message: 'Bad credentials' });
@@ -141,18 +155,22 @@ export const changePhone = async (req: any, res: Response) => {
 
   await PhoneChangeRequest.deleteOne({ userId: req.user._id });
 
-  const code = sendCodeToPhone(newPhone);
-  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+  try {
+    const code = sendCodeToPhone(newPhone);
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-  const request = new PhoneChangeRequest({
-    userId: req.user._id,
-    newPhone,
-    code,
-    expiresAt,
-  });
-  await request.save();
+    const request = new PhoneChangeRequest({
+      userId: req.user._id,
+      newPhone,
+      code,
+      expiresAt,
+    });
+    await request.save();
 
-  return res.json({ message: 'Код отправлен на новый номер' });
+    return res.json({ message: 'Код отправлен на новый номер' });
+  } catch (err: any) {
+    return res.status(429).json({ message: err.message || 'Слишком много запросов' });
+  }
 };
 
 export const verifyPhoneChange = async (req: any, res: Response) => {

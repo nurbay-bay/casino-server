@@ -33,7 +33,8 @@ const handleCanceledPayment = async (paymentIntent: any) => {
   const payment = await Payment.findOne({ providerId: paymentIntent.id });
   if (!payment) return;
 
-  payment.status = 'failed';
+  // Устанавливаем статус canceled, а не failed
+  payment.status = 'canceled';
   await payment.save();
 };
 
@@ -54,8 +55,10 @@ export const handleWebhook = async (req: Request, res: Response) => {
         await handleSuccessfulPayment(event.data.object);
         break;
       case 'payment_intent.payment_failed':
-      case 'payment_intent.canceled':
         await handleFailedPayment(event.data.object);
+        break;
+      case 'payment_intent.canceled':
+        await handleCanceledPayment(event.data.object);
         break;
     }
     res.json({ received: true });

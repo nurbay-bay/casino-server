@@ -5,7 +5,7 @@ export interface IGameHistory extends Document {
   userId: Types.ObjectId;
   game: 'slots'|'plinko';
   bet: number;
-  multiplier: number,
+  multiplier: number;
   result: 'win'|'lose';
   amountWon: number;
   details?: any;

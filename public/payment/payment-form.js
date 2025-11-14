@@ -2,6 +2,7 @@ class StripePaymentForm {
   constructor() {
     this.token = window.paymentToken;
     this.timerInterval = null;
+    this.paymentCompleted = false;
     this.init();
   }
 
@@ -22,6 +23,7 @@ class StripePaymentForm {
     this.updateUI();
     this.setupStripe();
     this.startTimer(this.expiresIn);
+    this.setupCloseHandlers();
   }
 
   updateUI() {
@@ -87,14 +89,21 @@ class StripePaymentForm {
         btn.disabled = false;
         btn.textContent = 'Оплатить';
       } else if (paymentIntent.status === 'succeeded') {
+        this.paymentCompleted = true;
         this.showSuccess();
         this.notifyParentAndClose();
       }
     });
 
-    document.getElementById('close-window').addEventListener('click', () => {
-      window.close();
-    });
+    const closeBtn = document.getElementById('close-window');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', async () => {
+        if (!this.paymentCompleted) {
+          await this.cancelPayment();
+        }
+        window.close();
+      });
+    }
   }
 
   displayError(error) {
@@ -135,7 +144,6 @@ class StripePaymentForm {
 
   notifyParentAndClose() {
     if (window.opener) {
-      // ИСПРАВЛЕНО: передаем paymentToken вместо invoiceId
       window.opener.postMessage({ 
         type: 'PAYMENT_SUCCESS', 
         paymentToken: this.token 
@@ -143,24 +151,32 @@ class StripePaymentForm {
     }
     setTimeout(() => window.close(), 2000);
   }
+
+  cancelPayment() {
+    if (this.paymentCompleted || !this.token) return;
+    
+    // Используем fetch с keepalive для надежной отправки при закрытии страницы
+    // sendBeacon не поддерживает кастомные методы и заголовки надежно
+    fetch(`/api/payments/cancel/${this.token}`, { 
+      method: 'POST',
+      keepalive: true,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).catch(err => {
+      // Игнорируем ошибки при закрытии страницы
+      console.error('Ошибка при отмене платежа:', err);
+    });
+  }
+
+  setupCloseHandlers() {
+    // Отмена при закрытии вкладки/окна
+    window.addEventListener('beforeunload', () => {
+      if (!this.paymentCompleted) {
+        this.cancelPayment();
+      }
+    });
+  }
 }
-
-// ИСПРАВЛЕНО: передаем paymentToken при закрытии окна
-window.addEventListener('beforeunload', () => {
-  if (window.opener && document.getElementById('submit-btn')?.textContent !== 'Обработка...') {
-    const form = new StripePaymentForm();
-    window.opener.postMessage({ 
-      type: 'PAYMENT_CLOSED', 
-      paymentToken: window.paymentToken 
-    }, '*');
-  }
-});
-
-// ИСПРАВЛЕНО: используем paymentToken для отмены
-window.addEventListener('message', (e) => {
-  if (e.data.type === 'PAYMENT_CLOSED' && e.data.paymentToken) {
-    fetch(`/api/payments/cancel/${e.data.paymentToken}`, { method: 'POST' });
-  }
-});
 
 document.addEventListener('DOMContentLoaded', () => new StripePaymentForm());

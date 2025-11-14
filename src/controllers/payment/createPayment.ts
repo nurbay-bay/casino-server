@@ -58,13 +58,30 @@ export const createPayment = async (req: any, res: Response) => {
   }
 };
 
+// Вспомогательная функция для отмены платежа
+const cancelPaymentInternal = async (payment: any) => {
+  // Отменяем PaymentIntent в Stripe, если он существует
+  if (payment.providerId) {
+    try {
+      await stripe.paymentIntents.cancel(payment.providerId);
+    } catch (err: any) {
+      // Игнорируем ошибки, если PaymentIntent уже отменен или завершен
+      if (!err.message?.includes('already') && !err.message?.includes('canceled') && !err.message?.includes('succeeded')) {
+        console.error(`Ошибка отмены PaymentIntent ${payment.providerId}:`, err.message);
+      }
+    }
+  }
+
+  payment.status = 'canceled';
+  await payment.save();
+};
+
 export const cancelPayment = async (req: Request, res: Response) => {
   const { token } = req.params;
   const payment = await Payment.findOne({ paymentToken: token, status: 'pending' });
   if (!payment) return res.status(404).json({ message: 'Платёж не найден' });
 
-  payment.status = 'canceled';
-  await payment.save();
+  await cancelPaymentInternal(payment);
 
   res.json({ message: 'Платёж отменён' });
 };
